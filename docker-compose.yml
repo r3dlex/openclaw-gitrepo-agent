@@ -1,0 +1,44 @@
+# =============================================================================
+# OpenClaw GitRepo Agent — Docker Compose
+# =============================================================================
+# Zero-install orchestration. Run `docker compose up` to start everything.
+# =============================================================================
+
+services:
+  # Elixir agent — core orchestration
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    volumes:
+      - ${GITREPO_AGENT_DATA_DIR:-/tmp/gitrepo-agent}/workdir:/data/workdir
+      - ${GITREPO_AGENT_DATA_DIR:-/tmp/gitrepo-agent}/data:/data/data
+      - ${GITREPO_AGENT_DATA_DIR:-/tmp/gitrepo-agent}/log:/data/log
+      - ./config:/app/config:ro
+      - ./input:/app/input
+      # SSH keys for git operations (clone, fetch, push)
+      - ~/.ssh:/root/.ssh:ro
+    environment:
+      - GITREPO_AGENT_DATA_DIR=/data
+      # Prevent SSH host key verification prompts in containers
+      - GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/root/.ssh/known_hosts
+    restart: unless-stopped
+
+  # Python pipeline runner — validation pipelines
+  pipeline-runner:
+    build:
+      context: .
+      dockerfile: tools/pipeline_runner/Dockerfile
+    env_file: .env
+    volumes:
+      - .:/repo:ro
+      - ${GITREPO_AGENT_DATA_DIR:-/tmp/gitrepo-agent}/data:/data/data
+      - ${GITREPO_AGENT_DATA_DIR:-/tmp/gitrepo-agent}/log:/data/log
+      # SSH keys for git operations (PR fetching, repo access)
+      - ~/.ssh:/root/.ssh:ro
+    environment:
+      - GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/root/.ssh/known_hosts
+    working_dir: /repo
+    profiles:
+      - tools

@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "pipeline-runner"
+version = "0.1.0"
+description = "Validation pipelines for OpenClaw GitRepo Agent"
+authors = ["OpenClaw <noreply@openclaw.ai>"]
+readme = "README.md"
+packages = [{include = "pipeline_runner"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+python-dotenv = "^1.0"
+requests = "^2.31"
+pyyaml = "^6.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0"
+ruff = "^0.4"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "S", "B"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

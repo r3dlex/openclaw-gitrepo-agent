@@ -1,0 +1,37 @@
+{
+  "repos": [
+    {
+      "name": "example-app",
+      "vcs": "github",
+      "org": "example-org",
+      "project": "example-app",
+      "url": "https://github.com/example-org/example-app.git",
+      "branches": ["main", "release/*"],
+      "task_manager": {
+        "type": "jira",
+        "project_key": "EXA",
+        "pattern": "EXA-\\d+"
+      },
+      "review_level": "standard"
+    },
+    {
+      "name": "example-api",
+      "vcs": "ado",
+      "org": "example-org",
+      "project": "example-project",
+      "url": "https://dev.azure.com/example-org/example-project/_git/example-api",
+      "branches": ["main", "release/*", "hotfix/*"],
+      "task_manager": {
+        "type": "ado",
+        "project_key": "EXAPI",
+        "pattern": "#\\d+"
+      },
+      "review_level": "deep"
+    }
+  ],
+  "defaults": {
+    "sync_interval_minutes": 30,
+    "review_level": "standard",
+    "score_window_days": 365
+  }
+}

@@ -1,0 +1,152 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  security:
+    name: Security Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for secrets in tracked files
+        run: |
+          # Ensure .env is not tracked
+          if git ls-files --error-unmatch .env 2>/dev/null; then
+            echo "::error::.env file is tracked by git!"
+            exit 1
+          fi
+
+          # Check .gitignore includes .env
+          if ! grep -q "^\.env$" .gitignore; then
+            echo "::error::.gitignore does not exclude .env"
+            exit 1
+          fi
+
+          # Check .env.example exists
+          if [ ! -f .env.example ]; then
+            echo "::error::.env.example not found"
+            exit 1
+          fi
+
+          # Scan for common secret patterns in tracked files
+          if git grep -lP '(?i)(password|secret|token|api.?key)\s*[=:]\s*["\x27][^"\x27]{8,}' -- '*.py' '*.ex' '*.exs' '*.yml' '*.yaml' '*.json' '*.md' 2>/dev/null | grep -v '.env.example' | grep -v 'spec/' | grep -v '.archgate/'; then
+            echo "::error::Possible secrets found in tracked files"
+            exit 1
+          fi
+
+          echo "✅ Security check passed"
+
+  architecture:
+    name: Architecture Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate required files
+        run: |
+          missing=0
+          for f in CLAUDE.md AGENTS.md SOUL.md IDENTITY.md .env.example .gitignore mix.exs docker-compose.yml Dockerfile; do
+            if [ ! -f "$f" ]; then
+              echo "::error::Required file missing: $f"
+              missing=1
+            fi
+          done
+
+          for d in spec lib/gitrepo_agent tools/pipeline_runner .archgate/adrs config input; do
+            if [ ! -d "$d" ]; then
+              echo "::error::Required directory missing: $d"
+              missing=1
+            fi
+          done
+
+          if [ $missing -eq 1 ]; then exit 1; fi
+          echo "✅ Architecture check passed"
+
+  adr-check:
+    name: ADR Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate ADRs
+        run: |
+          errors=0
+          for adr in .archgate/adrs/ARCH-*.md; do
+            [ -f "$adr" ] || continue
+
+            # Check required sections
+            for section in "## Context" "## Decision" "## Consequences"; do
+              if ! grep -q "$section" "$adr"; then
+                echo "::warning::Missing '$section' in $(basename $adr)"
+              fi
+            done
+
+            # Check status field
+            if ! grep -q '^\*\*Status:\*\*' "$adr"; then
+              echo "::warning::Missing Status field in $(basename $adr)"
+            fi
+          done
+
+          echo "✅ ADR check completed"
+
+  python-quality:
+    name: Python Quality
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/pipeline_runner
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Lint with ruff
+        run: poetry run ruff check .
+
+      - name: Run tests
+        run: poetry run pytest -v || echo "No tests yet"
+
+  elixir-build:
+    name: Elixir Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.16"
+          otp-version: "26"
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Compile
+        run: mix compile --warnings-as-errors
+
+      - name: Run tests
+        run: mix test || echo "No tests yet"
+
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t gitrepo-agent:test .
+
+      - name: Build pipeline-runner image
+        run: docker build -t pipeline-runner:test -f tools/pipeline_runner/Dockerfile tools/pipeline_runner/

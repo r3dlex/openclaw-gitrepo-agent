@@ -1,0 +1,37 @@
+name: PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  review:
+    name: Automated PR Review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install pipeline runner
+        working-directory: tools/pipeline_runner
+        run: poetry install
+
+      - name: Run security pipeline
+        working-directory: tools/pipeline_runner
+        run: poetry run python -m pipeline_runner security ../../
+
+      - name: Run architecture pipeline
+        working-directory: tools/pipeline_runner
+        run: poetry run python -m pipeline_runner architecture ../../
+
+      - name: Run quality pipeline
+        working-directory: tools/pipeline_runner
+        run: poetry run python -m pipeline_runner quality ../../
