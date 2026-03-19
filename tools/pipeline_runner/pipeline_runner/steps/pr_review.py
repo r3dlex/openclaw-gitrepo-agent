@@ -70,7 +70,11 @@ class PrReviewStep(PipelineStep):
         elif vcs == "ado":
             findings.extend(self._evaluate_ado_pr(org, project, pr_id))
         else:
-            findings.append({"severity": "info", "message": f"VCS '{vcs}' not yet supported for PR review: {pr_ref}", "file": None})
+            findings.append({
+                "severity": "info",
+                "message": f"VCS '{vcs}' not yet supported for PR review: {pr_ref}",
+                "file": None,
+            })
 
         return findings
 
@@ -78,7 +82,11 @@ class PrReviewStep(PipelineStep):
         findings = []
         token = os.getenv("GITHUB_TOKEN", "")
         if not token:
-            findings.append({"severity": "warning", "message": "GITHUB_TOKEN not set, skipping GitHub PR review", "file": None})
+            findings.append({
+                "severity": "warning",
+                "message": "GITHUB_TOKEN not set, skipping GitHub PR review",
+                "file": None,
+            })
             return findings
 
         try:
@@ -88,7 +96,12 @@ class PrReviewStep(PipelineStep):
                 capture_output=True, text=True, timeout=30,
             )
             if result.returncode != 0:
-                findings.append({"severity": "error", "message": f"Failed to fetch GitHub PR {org}/{repo}#{pr_id}: {result.stderr.strip()}", "file": None})
+                err = result.stderr.strip()
+                findings.append({
+                    "severity": "error",
+                    "message": f"Failed to fetch GitHub PR {org}/{repo}#{pr_id}: {err}",
+                    "file": None,
+                })
                 return findings
 
             pr_data = json.loads(result.stdout)
@@ -98,7 +111,11 @@ class PrReviewStep(PipelineStep):
             severity = "info" if score >= 70 else "warning" if score >= 50 else "error"
             findings.append({
                 "severity": severity,
-                "message": f"PR {org}/{repo}#{pr_id}: score={score:.1f}, verdict={verdict}, author={pr_data.get('author', {}).get('login', 'unknown')}",
+                "message": (
+                    f"PR {org}/{repo}#{pr_id}: score={score:.1f}, "
+                    f"verdict={verdict}, "
+                    f"author={pr_data.get('author', {}).get('login', 'unknown')}"
+                ),
                 "file": None,
             })
 
@@ -111,7 +128,11 @@ class PrReviewStep(PipelineStep):
         findings = []
         pat = os.getenv("ADO_PAT", "")
         if not pat:
-            findings.append({"severity": "warning", "message": "ADO_PAT not set, skipping ADO PR review", "file": None})
+            findings.append({
+                "severity": "warning",
+                "message": "ADO_PAT not set, skipping ADO PR review",
+                "file": None,
+            })
             return findings
 
         import base64
@@ -123,7 +144,10 @@ class PrReviewStep(PipelineStep):
             headers = {"Authorization": f"Basic {auth}", "Content-Type": "application/json"}
             base_url = f"https://dev.azure.com/{org}/{project}/_apis"
 
-            resp = requests.get(f"{base_url}/git/pullrequests/{pr_id}", headers=headers, params={"api-version": "7.0"}, timeout=15)
+            resp = requests.get(
+                f"{base_url}/git/pullrequests/{pr_id}",
+                headers=headers, params={"api-version": "7.0"}, timeout=15,
+            )
             resp.raise_for_status()
             pr_data = resp.json()
 

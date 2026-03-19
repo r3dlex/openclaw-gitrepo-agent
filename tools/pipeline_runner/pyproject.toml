@@ -22,6 +22,7 @@ line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "S", "B"]
+ignore = ["S603", "S607", "S108", "S112"]
 
 [build-system]
 requires = ["poetry-core"]

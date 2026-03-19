@@ -23,8 +23,7 @@ defmodule GitrepoAgent.MixProject do
     [
       {:jason, "~> 1.4"},
       {:req, "~> 0.5"},
-      {:dotenv_parser, "~> 2.0"},
-      {:telegram, "~> 1.2"}
+      {:dotenv_parser, "~> 2.0"}
     ]
   end
 

@@ -36,7 +36,11 @@ class SecurityStep(PipelineStep):
         else:
             content = gitignore.read_text()
             if ".env" not in content:
-                findings.append({"severity": "error", "message": ".gitignore does not exclude .env", "file": str(gitignore)})
+                findings.append({
+                    "severity": "error",
+                    "message": ".gitignore does not exclude .env",
+                    "file": str(gitignore),
+                })
 
         # Check .env.example exists
         env_example = self.repo_path / ".env.example"

@@ -26,12 +26,15 @@ def write_report(result: dict, output_dir: str | None = None) -> Path:
     ]
 
     for step in result.get("steps", []):
-        icon = "\u2705" if step["status"] == "passed" else "\u274c" if step["status"] == "failed" else "\u23ed\ufe0f"
-        lines.append(f"### {icon} {step['name']} \u2014 {step['status']} ({step.get('duration_ms', 0)}ms)")
+        icon_map = {"passed": "\u2705", "failed": "\u274c"}
+        icon = icon_map.get(step["status"], "\u23ed\ufe0f")
+        duration = step.get('duration_ms', 0)
+        lines.append(f"### {icon} {step['name']} \u2014 {step['status']} ({duration}ms)")
         lines.append("")
 
         for finding in step.get("findings", []):
-            sev = {"error": "\U0001f534", "warning": "\U0001f7e1", "info": "\U0001f535"}.get(finding["severity"], "\u26aa")
+            sev_icons = {"error": "\U0001f534", "warning": "\U0001f7e1", "info": "\U0001f535"}
+            sev = sev_icons.get(finding["severity"], "\u26aa")
             lines.append(f"- {sev} {finding['message']}")
 
         lines.append("")

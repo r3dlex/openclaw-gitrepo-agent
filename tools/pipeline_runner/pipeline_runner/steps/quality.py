@@ -37,10 +37,14 @@ class QualityStep(PipelineStep):
                 import json
                 issues = json.loads(result.stdout)
                 for issue in issues[:20]:  # Cap at 20
+                    code = issue.get('code', '?')
+                    msg = issue.get('message', '')
+                    fname = issue.get('filename', '')
+                    row = issue.get('location', {}).get('row', '?')
                     findings.append({
                         "severity": "warning",
-                        "message": f"ruff: {issue.get('code', '?')} {issue.get('message', '')} ({issue.get('filename', '')}:{issue.get('location', {}).get('row', '?')})",
-                        "file": issue.get("filename"),
+                        "message": f"ruff: {code} {msg} ({fname}:{row})",
+                        "file": fname,
                     })
         except FileNotFoundError:
             findings.append({"severity": "info", "message": "ruff not installed, skipping Python lint", "file": None})
@@ -68,7 +72,11 @@ class QualityStep(PipelineStep):
                     "file": None,
                 })
         except FileNotFoundError:
-            findings.append({"severity": "info", "message": "mix not installed, skipping Elixir format check", "file": None})
+            findings.append({
+                "severity": "info",
+                "message": "mix not installed, skipping Elixir format check",
+                "file": None,
+            })
         except Exception as e:
             findings.append({"severity": "info", "message": f"Elixir format check failed: {e}", "file": None})
 

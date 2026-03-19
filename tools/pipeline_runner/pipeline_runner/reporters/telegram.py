@@ -17,7 +17,8 @@ def send_report(result: dict) -> bool:
     lines = [f"{icon} *Pipeline: {result['pipeline']}*", ""]
 
     for step in result.get("steps", []):
-        step_icon = "\u2705" if step["status"] == "passed" else "\u274c" if step["status"] == "failed" else "\u23ed\ufe0f"
+        icon_map = {"passed": "\u2705", "failed": "\u274c"}
+        step_icon = icon_map.get(step["status"], "\u23ed\ufe0f")
         lines.append(f"{step_icon} {step['name']}: {step['status']}")
 
         errors = [f for f in step.get("findings", []) if f["severity"] == "error"]

@@ -46,11 +46,13 @@ def run_pipeline(name: str, repo_path: str | None = None) -> dict:
         duration_ms = int((time.time() - start) * 1000)
         result["duration_ms"] = duration_ms
 
-        status_icon = "\u2705" if result["status"] == "passed" else "\u274c" if result["status"] == "failed" else "\u23ed\ufe0f"
+        status_map = {"passed": "\u2705", "failed": "\u274c"}
+        status_icon = status_map.get(result["status"], "\u23ed\ufe0f")
         print(f"  {status_icon} {result['name']}: {result['status']} ({duration_ms}ms)")
 
+        sev_icons = {"error": "\U0001f534", "warning": "\U0001f7e1", "info": "\U0001f535"}
         for finding in result.get("findings", []):
-            severity_icon = {"error": "\U0001f534", "warning": "\U0001f7e1", "info": "\U0001f535"}.get(finding["severity"], "\u26aa")
+            severity_icon = sev_icons.get(finding["severity"], "\u26aa")
             print(f"     {severity_icon} {finding['message']}")
 
         if result["status"] == "failed":
