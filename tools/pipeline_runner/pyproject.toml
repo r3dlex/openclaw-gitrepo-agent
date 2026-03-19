@@ -3,7 +3,6 @@ name = "pipeline-runner"
 version = "0.1.0"
 description = "Validation pipelines for OpenClaw GitRepo Agent"
 authors = ["OpenClaw <noreply@openclaw.ai>"]
-readme = "README.md"
 packages = [{include = "pipeline_runner"}]
 
 [tool.poetry.dependencies]
