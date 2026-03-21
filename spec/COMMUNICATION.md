@@ -4,14 +4,6 @@ How the GitRepo Agent communicates results to humans and other agents.
 
 ## Delivery Channels
 
-### Telegram
-
-Used for time-sensitive notifications and concise summaries.
-
-- **Weekly reports**: Monday morning summary of all repo activity
-- **Urgent security alerts**: Immediate notification for critical/high severity findings
-- **PR processing summaries**: Brief verdict after each PR evaluation
-
 ### Librarian Agent
 
 Full markdown reports are dropped into `$LIBRARIAN_DATA_FOLDER/input/` for long-term storage and retrieval.
@@ -70,50 +62,56 @@ All reports follow progressive disclosure: summary first, then details, then raw
 | PR evaluation | `YYYY-MM-DD_pr_<id>.md`            |
 | Security alert| `YYYY-MM-DD_security_alert_<id>.md` |
 
-## Telegram Message Format
+## IAMQ Message Examples
 
-Messages are concise with score and verdict upfront. Example PR summary:
+### PR Score Summary (sent to requesting agent or broadcast)
 
-```
-PR #456 — org/repo-name
-Score: 78% | Verdict: approve_with_comments
-
-Security: 85 | Design: 72 | Style: 80 | Practices: 75 | Docs: 70
-
-Key findings:
-- Missing error handling in payment module
-- Test coverage below threshold for new endpoint
-
-Full report: delivered to Librarian
+```json
+{
+  "from": "gitrepo_agent",
+  "to": "main",
+  "type": "response",
+  "priority": "NORMAL",
+  "subject": "PR score: org/repo-name#456",
+  "body": "Score: 78% | Verdict: approve_with_comments\n\nSecurity: 85 | Design: 72 | Style: 80 | Practices: 75 | Docs: 70\n\nKey findings:\n- Missing error handling in payment module\n- Test coverage below threshold for new endpoint\n\nFull report: delivered to Librarian"
+}
 ```
 
-Example weekly summary:
+### Weekly Report Broadcast
 
-```
-Weekly Report — 2026-03-16
-
-Repos monitored: 12 | PRs evaluated: 23
-
-Top scores:
-  alice (92 avg) | bob (85 avg)
-
-Needs attention:
-  charlie (declining, 58 avg)
-
-Security alerts: 1 critical (PR #789, repo-name)
-AI-assisted commits: 7 of 45 total
-
-Full report: delivered to Librarian
+```json
+{
+  "from": "gitrepo_agent",
+  "to": "broadcast",
+  "type": "info",
+  "priority": "NORMAL",
+  "subject": "Weekly GitRepo Report — 2026-03-16",
+  "body": "Repos monitored: 12 | PRs evaluated: 23\n\nTop scores: alice (92 avg) | bob (85 avg)\nNeeds attention: charlie (declining, 58 avg)\n\nSecurity alerts: 1 critical (PR #789, repo-name)\nAI-assisted commits: 7 of 45 total\n\nFull report: delivered to Librarian"
+}
 ```
 
-## Group Notifications
+### Security Alert (urgent broadcast)
 
-When sending to Telegram groups:
+```json
+{
+  "from": "gitrepo_agent",
+  "to": "broadcast",
+  "type": "error",
+  "priority": "URGENT",
+  "subject": "Security alert: org/repo-name#789",
+  "body": "Critical security finding in PR #789\n\nFinding: Hardcoded API key detected\nFile: src/config/api.py, line 23\nValue: [REDACTED]\n\nVerdict: reject"
+}
+```
 
-- Be concise, no more than 10 lines per message
+## Broadcast Rules
+
+When broadcasting to the swarm:
+
+- Be concise — keep the body under 500 characters for summaries
 - Lead with the most important information (security alerts first)
-- Link to the full report rather than including all details
+- Reference the full Librarian report rather than including all details
 - Use a single message per PR (do not split across messages)
+- Use `priority: "URGENT"` only for security-critical findings
 
 ## Content Safety Rules
 

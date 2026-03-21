@@ -1,7 +1,7 @@
 defmodule GitrepoAgent.ReportGenerator do
   @moduledoc """
-  Generates weekly reports and delivers them via Telegram
-  and to the Librarian agent's input folder.
+  Generates weekly reports and delivers them to the Librarian
+  agent's input folder and broadcasts summaries via IAMQ.
   """
   use GenServer
 

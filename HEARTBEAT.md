@@ -25,7 +25,7 @@
 12. Generate weekly commit volume report for all watched repos
 13. Generate author activity and scoring summary
 14. Detect AI-assisted commits and report percentages
-15. Deliver reports to Telegram and `$LIBRARIAN_DATA_FOLDER/input/`
+15. Deliver reports to `$LIBRARIAN_DATA_FOLDER/input/`
 16. Broadcast weekly report summary to IAMQ (all agents)
 17. Archive processed scoring data older than 1 year
 

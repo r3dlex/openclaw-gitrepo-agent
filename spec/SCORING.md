@@ -93,7 +93,7 @@ PRs with security findings are flagged separately regardless of overall score:
 
 | Severity  | Action                                          |
 |-----------|------------------------------------------------|
-| Critical  | Immediate Telegram alert, verdict forced to reject |
+| Critical  | Immediate IAMQ urgent broadcast, verdict forced to reject |
 | High      | Flagged in report, recommend blocking merge     |
 | Medium    | Noted in report, included in weekly summary     |
 | Low/Info  | Included in detailed report only                |

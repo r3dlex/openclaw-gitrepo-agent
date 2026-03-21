@@ -68,21 +68,21 @@ curl -u :$ADO_PAT https://dev.azure.com/{org}/_apis/projects
 | Disk space | Check `$GITREPO_AGENT_DATA_DIR/workdir/` usage, clean stale repos |
 | Git LFS files | Ensure git-lfs is installed in the Docker image if repos use LFS |
 
-## Telegram Bot Not Sending
+## IAMQ Connection Issues
 
-**Symptom:** Reports generated but no Telegram messages received.
+**Symptom:** Agent fails to register or send messages to the swarm.
 
 | Cause | Solution |
 |-------|----------|
-| Invalid bot token | Verify `TELEGRAM_BOT_TOKEN` in `.env`, test with `/getMe` API call |
-| Wrong chat_id | Use `/getUpdates` to find correct chat_id after sending a message to the bot |
-| Rate limiting | Telegram limits ~30 msgs/sec. Agent should batch. Check logs for 429 errors |
-| Bot not in group | Add bot to group and grant message permissions |
-| Message too long | Telegram max is 4096 chars. Agent should truncate. Check for formatting errors |
+| IAMQ service not running | Start the message queue: `cd ~/Ws/Openclaw/openclaw-inter-agent-message-queue && docker compose up -d` |
+| Wrong URL | Verify `IAMQ_HTTP_URL` in `.env` (default: `http://127.0.0.1:18790`) |
+| Port conflict | Check `lsof -i :18790` for conflicts |
+| Agent not registered | Check `curl $IAMQ_HTTP_URL/agents` to see registered agents |
+| Messages not delivered | Check inbox: `curl $IAMQ_HTTP_URL/inbox/gitrepo_agent?status=unread` |
 
-Test Telegram connectivity:
+Test IAMQ connectivity:
 ```bash
-curl "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMe"
+curl $IAMQ_HTTP_URL/status
 ```
 
 ## ARCHITECT Delegation Fails
@@ -117,17 +117,6 @@ See [WORKFLOW.md](WORKFLOW.md) Phase 3 for ARCHITECT delegation details.
 | Disk space full | Free space, then re-run maintenance |
 | Permission denied | Check ownership of `$GITREPO_AGENT_DATA_DIR/log/` |
 | Corrupted log file | Remove the specific file, agent will create fresh logs |
-
-## Email/SMTP Issues
-
-**Symptom:** Email notifications not sent.
-
-| Cause | Solution |
-|-------|----------|
-| DavMail not running | Start DavMail service, verify it's listening on configured port |
-| SMTP auth failed | Check SMTP credentials in `.env` |
-| TLS/SSL mismatch | Ensure SMTP port matches security setting (587/STARTTLS, 465/SSL) |
-| Firewall blocking | Verify outbound connections to SMTP port are allowed |
 
 ## SSH / Git Clone Failures
 

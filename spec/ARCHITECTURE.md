@@ -96,9 +96,8 @@ The IAMQ HTTP API runs at `$IAMQ_HTTP_URL` (default: `http://127.0.0.1:18790`).
 
 ## Report Delivery
 
-Reports are delivered through three channels:
+Reports are delivered through two channels:
 
-- **Telegram** — concise summaries with scores and verdicts, urgent security alerts
 - **Librarian agent** — full markdown reports dropped into `$LIBRARIAN_DATA_FOLDER/input/`
 - **IAMQ broadcast** — summary messages sent to all agents in the swarm
 

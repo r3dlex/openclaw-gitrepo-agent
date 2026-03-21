@@ -6,7 +6,7 @@ Non-negotiable rules governing how the GitRepo Agent operates. These rules prote
 
 - **No secrets in git.** Never commit `.env` files, tokens, API keys, or credentials. The `security` pipeline enforces this.
 - **No secrets in reports.** Redact all sensitive values in generated reports. Describe the finding type and location, never the value.
-- **No secrets in chat messages.** Telegram messages must not contain tokens, passwords, or connection strings, even in truncated form.
+- **No secrets in messages.** IAMQ messages and broadcasts must not contain tokens, passwords, or connection strings, even in truncated form.
 
 See [COMMUNICATION.md](COMMUNICATION.md) for redaction examples.
 
@@ -32,13 +32,13 @@ See [COMMUNICATION.md](COMMUNICATION.md) for redaction examples.
 - **Respect VCS API limits.** Track remaining quota from response headers.
 - **Implement exponential backoff.** When rate-limited, back off starting at 1 second, doubling up to 60 seconds.
 - **Spread requests.** When syncing many repos, space API calls to avoid burst patterns.
-- **Alert on sustained limiting.** If rate-limited for more than 5 minutes, send a Telegram alert.
+- **Alert on sustained limiting.** If rate-limited for more than 5 minutes, broadcast an alert via IAMQ.
 
 See [LEARNINGS.md](LEARNINGS.md) for VCS-specific rate limit details.
 
 ## Credential Rotation
 
-- **Detect expiring tokens.** When VCS API returns 401 or a token-expiry indicator, log the event and send a Telegram alert immediately.
+- **Detect expiring tokens.** When VCS API returns 401 or a token-expiry indicator, log the event and broadcast an urgent IAMQ alert immediately.
 - **No automatic token refresh.** Token rotation is a human operator task. The agent alerts but does not attempt to generate new tokens.
 - **Grace period handling.** If a token fails, retry once after 30 seconds (in case of transient issues), then disable that repo's sync and alert.
 
@@ -60,7 +60,7 @@ See [WORKFLOW.md](WORKFLOW.md) Phase 5 for the maintenance process that enforces
 When the agent encounters an unrecoverable error:
 
 1. Log the full error with context
-2. Send a Telegram alert with error summary
+2. Broadcast an IAMQ alert with error summary
 3. Skip the failing item and continue with remaining work
 4. Never crash the entire agent due to a single repo or PR failure
 

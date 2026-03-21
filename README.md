@@ -10,7 +10,7 @@ Autonomous repository sentinel that monitors, evaluates, and reports on git repo
 - **Generates weekly reports** — commit volumes, author activity, pipeline stability, AI-assisted commit detection
 - **Detects risks** — flags security-sensitive changes and badly-written commits
 - **Delegates deep reviews** — invokes ARCHITECT mode from [openclaw-agent-claude](https://github.com/openclaw/openclaw-agent-claude) for thorough code evaluation
-- **Delivers reports** — via Telegram and to the Librarian agent
+- **Delivers reports** — to the Librarian agent and via IAMQ broadcast to the swarm
 
 ## Quick Start
 
@@ -53,7 +53,7 @@ docker compose run --rm pipeline-runner python -m pipeline_runner full
     │(workdir)│          │       │
     └─────────┘          └───────┘
          ↕                   ↓
-  ADO/GitHub/GitLab    Telegram + Librarian
+  ADO/GitHub/GitLab    IAMQ + Librarian
 ```
 
 ## Repository Structure

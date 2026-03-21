@@ -96,7 +96,7 @@ All configuration lives in `.env`. See `.env.example` for the full list. Key var
 
 - `GITREPO_AGENT_DATA_DIR` — where repos, logs, and scoring data live
 - `ADO_PAT` / `GITHUB_TOKEN` — VCS authentication
-- `TELEGRAM_BOT_TOKEN` — report delivery
+- `IAMQ_HTTP_URL` — inter-agent message queue
 - `OPENCLAW_AGENT_CLAUDE_DIR` — ARCHITECT integration
 
 ## Running Pipelines

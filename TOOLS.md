@@ -17,15 +17,6 @@ docker compose run --rm pipeline-runner python -m pipeline_runner <command>
 
 Available commands: `security`, `architecture`, `quality`, `adr-check`, `full`, `pr-review`
 
-## Himalaya (Email CLI)
-
-Account configured via `$HIMALAYA_ACCOUNT` in `.env`.
-Used for email-based PR notification processing.
-
-## Telegram
-
-Reports delivered via bot. Token and chat ID in `.env`.
-
 ## ARCHITECT Delegation
 
 To invoke a deep code review via openclaw-agent-claude:

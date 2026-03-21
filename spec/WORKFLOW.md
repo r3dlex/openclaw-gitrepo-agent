@@ -55,8 +55,8 @@ See `input/TASK.md` for the full format specification.
 
 ### Per-PR Reports
 1. Generate markdown report: `YYYY-MM-DD_pr_<id>.md`
-2. Send Telegram summary (concise: repo, PR title, score, verdict)
-3. Drop full report into `$LIBRARIAN_DATA_FOLDER/input/`
+2. Drop full report into `$LIBRARIAN_DATA_FOLDER/input/`
+3. Send IAMQ response to requesting agent (or broadcast if auto-detected)
 
 ### Weekly Reports (Monday)
 1. Aggregate all PR evaluations from the past week
@@ -64,7 +64,7 @@ See `input/TASK.md` for the full format specification.
 3. Calculate author score trends (improving/stable/declining)
 4. Flag AI-assisted commits (see [SCORING.md](SCORING.md) for detection)
 5. Generate `YYYY-MM-DD_weekly_report.md`
-6. Deliver via Telegram and Librarian
+6. Deliver to Librarian and broadcast summary via IAMQ
 
 See [COMMUNICATION.md](COMMUNICATION.md) for report formatting and delivery rules.
 
