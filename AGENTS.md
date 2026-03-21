@@ -13,6 +13,7 @@ Before doing anything else:
 4. Read `HEARTBEAT.md` — what periodic tasks are active
 5. Read `input/TASK.md` — pending PRs and tasks to process
 6. Load `.env` — all configuration lives there, never hardcode secrets or paths
+7. Register with the **Inter-Agent Message Queue** — announce your presence to the swarm
 
 ## Environment
 
@@ -25,19 +26,22 @@ All paths and credentials come from `.env`. Key variables:
 | `OPENCLAW_AGENT_CLAUDE_DIR` | Path to openclaw-agent-claude for ARCHITECT reviews |
 | `ADO_PAT` / `GITHUB_TOKEN` / `GITLAB_TOKEN` | VCS authentication |
 | `TELEGRAM_BOT_TOKEN` | Report delivery via Telegram |
+| `IAMQ_HTTP_URL` | Inter-Agent Message Queue HTTP API (default: `http://127.0.0.1:18790`) |
+| `IAMQ_AGENT_ID` | This agent's ID in the MQ registry (default: `gitrepo_agent`) |
 
 **Never hardcode paths, emails, tokens, or org-specific values.** Everything is in `.env`.
 
 ## Core Loop
 
 ```
+0. Register with IAMQ                → heartbeat, discover other agents
 1. Sync watched repositories         → $GITREPO_AGENT_DATA_DIR/workdir/
-2. Process input/TASK.md             → evaluate each PR
+2. Process input/TASK.md + MQ inbox  → evaluate each PR
 3. Score PRs (security, quality,     → spec/SCORING.md
    architecture, documentation)
 4. Delegate deep reviews             → ARCHITECT via openclaw-agent-claude
 5. Track committer scores            → $GITREPO_AGENT_DATA_DIR/data/scoring/
-6. Generate reports                  → Telegram + $LIBRARIAN_DATA_FOLDER/input/
+6. Generate reports                  → Telegram + $LIBRARIAN_DATA_FOLDER/input/ + MQ broadcast
 7. Clean up                          → compress logs, remove processed tasks
 ```
 
@@ -74,7 +78,51 @@ Every Monday, generate:
 - Offending PRs (security risks, low-quality commits)
 - Task manager correlation (Jira IDs, ADO work items in commits)
 
-Delivery: Telegram message + markdown file in `$LIBRARIAN_DATA_FOLDER/input/`
+Delivery: Telegram message + markdown file in `$LIBRARIAN_DATA_FOLDER/input/` + MQ broadcast to all agents
+
+## Inter-Agent Communication (IAMQ)
+
+This agent is part of the **OpenClaw agent swarm**. It communicates with other agents via the Inter-Agent Message Queue:
+
+- **Registration:** On startup, registers as `gitrepo_agent` at `$IAMQ_HTTP_URL`
+- **Heartbeat:** Sends periodic heartbeats to stay registered (every `$IAMQ_HEARTBEAT_MS`)
+- **Inbox polling:** Checks for incoming messages every `$IAMQ_POLL_MS`
+- **Sending:** Can message any registered agent by ID, or broadcast to all
+
+### Known Agents
+
+| Agent | ID | What They Do |
+|---|---|---|
+| Main | `main` | Central coordinator |
+| MQ Agent | `mq_agent` | Message queue manager |
+| Mail Agent | `mail_agent` | Email integration |
+| Librarian | `librarian_agent` | Research & documentation |
+| Journalist | `journalist_agent` | News & content |
+| Instagram | `instagram_agent` | Social media |
+| Workday | `workday_agent` | Calendar & scheduling |
+| **GitRepo** | **`gitrepo_agent`** | **This agent — repo monitoring & PR scoring** |
+| Sysadmin | `sysadmin_agent` | System administration |
+| Health/Fitness | `health_fitness` | Health tracking |
+| Agent Claude | `agent_claude` | Claude AI assistant |
+| Archivist | `archivist_agent` | Data archival |
+
+### Message Types This Agent Handles
+
+| Type | Subject Pattern | Action |
+|---|---|---|
+| `request` | `pr-review`, `PR review` | Queue PR for evaluation |
+| `request` | `repo-status`, `status` | Respond with current repo status |
+| `request` | `score`, `scoring` | Return scoring data |
+| `info` | any | Log and acknowledge |
+
+### Outgoing Messages
+
+- **Weekly reports** → broadcast to all agents
+- **PR scores** → info to requesting agent
+- **Security alerts** → urgent broadcast when critical PR is detected
+- **ARCHITECT delegation** → request to `agent_claude`
+
+For API details → `spec/COMMUNICATION.md`
 
 ## Red Lines
 

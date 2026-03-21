@@ -37,6 +37,70 @@ cd $OPENCLAW_AGENT_CLAUDE_DIR
 
 See `spec/SCORING.md` for the scoring categories and weights.
 
+## Inter-Agent Message Queue (IAMQ)
+
+The agent communicates with other OpenClaw agents via the central message queue:
+
+```
+Base URL: $IAMQ_HTTP_URL (default: http://127.0.0.1:18790)
+Agent ID: $IAMQ_AGENT_ID (default: gitrepo_agent)
+```
+
+### Key Endpoints
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/register` | POST | Register this agent |
+| `/heartbeat` | POST | Keep-alive signal |
+| `/send` | POST | Send a message to another agent |
+| `/inbox/gitrepo_agent` | GET | Fetch incoming messages |
+| `/inbox/gitrepo_agent?status=unread` | GET | Fetch unread messages only |
+| `/messages/:id` | PATCH | Update message status (read/acted/archived) |
+| `/agents` | GET | List all registered agents |
+| `/status` | GET | Queue health summary |
+
+### Elixir API (via `GitrepoAgent.MqClient`)
+
+```elixir
+# Send a message to another agent
+MqClient.send_message("librarian_agent", "Weekly report", report_body, priority: "NORMAL")
+
+# Broadcast to all agents
+MqClient.broadcast("Security alert", alert_body, priority: "URGENT", type: "error")
+
+# Check inbox
+{:ok, messages} = MqClient.inbox("unread")
+
+# Acknowledge a message
+MqClient.ack(message_id, "acted")
+
+# List all agents in the swarm
+{:ok, agents} = MqClient.agents()
+```
+
+### Direct HTTP (curl)
+
+```bash
+# Register
+curl -X POST $IAMQ_HTTP_URL/register -H 'Content-Type: application/json' -d '{"agent_id":"gitrepo_agent"}'
+
+# Send message
+curl -X POST $IAMQ_HTTP_URL/send -H 'Content-Type: application/json' -d '{
+  "from": "gitrepo_agent",
+  "to": "librarian_agent",
+  "type": "info",
+  "priority": "NORMAL",
+  "subject": "Weekly repo report",
+  "body": "..."
+}'
+
+# Check inbox
+curl $IAMQ_HTTP_URL/inbox/gitrepo_agent?status=unread
+
+# List agents
+curl $IAMQ_HTTP_URL/agents
+```
+
 ## Data Directories
 
 All runtime data lives under `$GITREPO_AGENT_DATA_DIR`:

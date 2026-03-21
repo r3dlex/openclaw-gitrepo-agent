@@ -20,6 +20,38 @@ Full markdown reports are dropped into `$LIBRARIAN_DATA_FOLDER/input/` for long-
 - Reports remain available for historical queries and trend analysis
 - This is the authoritative archive of all agent output
 
+### Inter-Agent Message Queue (IAMQ)
+
+The agent communicates with other OpenClaw agents via the centralized message queue at `$IAMQ_HTTP_URL`.
+
+**Outgoing messages:**
+
+- **Weekly report broadcast** — summary sent to all agents every Monday via `type: "info"`, `priority: "NORMAL"`
+- **Security alerts** — urgent broadcast when a critical/high severity finding is detected via `type: "error"`, `priority: "URGENT"`
+- **PR score responses** — sent to the requesting agent when they ask for a PR review via `type: "response"`
+- **Status responses** — sent when another agent queries repo status via `type: "response"`
+
+**Incoming messages handled:**
+
+| Subject Pattern | Action |
+|---|---|
+| `pr-review`, `PR review` | Queue the referenced PR for evaluation |
+| `repo-status`, `status` | Respond with current repo sync status |
+| `score`, `scoring` | Return scoring data for requested repo/author |
+
+**Message format:**
+
+```json
+{
+  "from": "gitrepo_agent",
+  "to": "broadcast",
+  "type": "info",
+  "priority": "NORMAL",
+  "subject": "Weekly GitRepo Report — 2026-03-20",
+  "body": "Repos: 12 | PRs evaluated: 23 | Security alerts: 1\n\nTop: alice (92 avg) | Needs attention: charlie (58 avg)"
+}
+```
+
 ## Report Format
 
 All reports follow progressive disclosure: summary first, then details, then raw data.

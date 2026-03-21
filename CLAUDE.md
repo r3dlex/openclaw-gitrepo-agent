@@ -47,6 +47,7 @@ docker compose run --rm pipeline-runner python -m pipeline_runner pr-review
 ├── lib/                   ← Elixir modules (core orchestration)
 │   └── gitrepo_agent/
 │       ├── application.ex
+│       ├── mq_client.ex       ← Inter-Agent Message Queue client
 │       ├── repo_manager.ex
 │       ├── pr_evaluator.ex
 │       ├── stats_collector.ex
@@ -71,11 +72,13 @@ docker compose run --rm pipeline-runner python -m pipeline_runner pr-review
 
 The agent has two runtime layers:
 
-1. **Elixir/OTP** (`lib/gitrepo_agent/`) — Core orchestration: repo management, task processing, scheduling, report generation. Uses OTP supervision trees for reliability.
+1. **Elixir/OTP** (`lib/gitrepo_agent/`) — Core orchestration: repo management, task processing, scheduling, report generation, inter-agent messaging. Uses OTP supervision trees for reliability.
 
 2. **Python** (`tools/pipeline_runner/`) — Validation pipelines: security scanning, code quality, ADR checks, PR scoring. Managed by Poetry.
 
-Both run in Docker containers. See `spec/ARCHITECTURE.md` for full details.
+3. **IAMQ Integration** — The agent registers with the OpenClaw Inter-Agent Message Queue on startup, sends heartbeats, polls for incoming messages, and broadcasts reports to the swarm.
+
+Both runtimes run in Docker containers. See `spec/ARCHITECTURE.md` for full details.
 
 ## Key Decisions (ADRs)
 

@@ -9,6 +9,7 @@ The GitRepo Agent is a multi-VCS repository monitoring and PR evaluation system 
 The core orchestration layer uses OTP supervision trees for reliability:
 
 - `GitrepoAgent.Application` — top-level supervisor, starts all subsystems
+- `GitrepoAgent.MqClient` — inter-agent message queue client (registration, heartbeat, inbox polling, messaging)
 - `GitrepoAgent.Scheduler` — cron-like scheduling for repo sync, weekly reports, maintenance
 - `GitrepoAgent.RepoSync` — pulls latest from all watched repositories, detects new commits and PRs
 - `GitrepoAgent.TaskProcessor` — reads `input/TASK.md`, dispatches work items
@@ -81,18 +82,31 @@ For complex PRs requiring deeper architectural review, the agent delegates to `o
 
 See [SCORING.md](SCORING.md) for when ARCHITECT delegation triggers and [WORKFLOW.md](WORKFLOW.md) for the delegation flow.
 
+## Inter-Agent Communication
+
+The agent participates in the OpenClaw agent swarm via the Inter-Agent Message Queue (IAMQ):
+
+- **MqClient GenServer** — starts first in the supervision tree, registers with IAMQ
+- **Heartbeat loop** — sends periodic heartbeats to maintain presence in the registry
+- **Inbox polling** — checks for incoming messages from other agents on a configurable interval
+- **Message routing** — dispatches incoming requests to appropriate handlers (PR review, status, scoring)
+- **Outgoing messages** — broadcasts weekly reports, sends targeted responses, alerts on security issues
+
+The IAMQ HTTP API runs at `$IAMQ_HTTP_URL` (default: `http://127.0.0.1:18790`).
+
 ## Report Delivery
 
-Reports are delivered through two channels:
+Reports are delivered through three channels:
 
 - **Telegram** — concise summaries with scores and verdicts, urgent security alerts
 - **Librarian agent** — full markdown reports dropped into `$LIBRARIAN_DATA_FOLDER/input/`
+- **IAMQ broadcast** — summary messages sent to all agents in the swarm
 
 See [COMMUNICATION.md](COMMUNICATION.md) for report formats and delivery rules.
 
 ## Configuration
 
 - `repos.json` — list of watched repositories with VCS type, URL, branch filters, and sync frequency
-- `.env` — credentials for VCS APIs, Telegram bot token, Librarian paths
+- `.env` — credentials for VCS APIs, Telegram bot token, Librarian paths, IAMQ connection settings
 
 See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common configuration issues.

@@ -2,28 +2,32 @@
 
 ## On Every Heartbeat
 
-1. Check `input/TASK.md` for new PRs to process
-2. Sync watched repositories that haven't been updated in the last interval
-3. Process any pending PR evaluations
+1. Send heartbeat to IAMQ (`POST /heartbeat`) — stay registered in the swarm
+2. Poll IAMQ inbox for incoming messages — process requests from other agents
+3. Check `input/TASK.md` for new PRs to process
+4. Sync watched repositories that haven't been updated in the last interval
+5. Process any pending PR evaluations
 
 ## Every 4 Hours
 
-4. Check pipeline status for watched repos (CI pass/fail rates)
-5. Detect new PRs in watched repos that aren't in the task list yet
+6. Check pipeline status for watched repos (CI pass/fail rates)
+7. Detect new PRs in watched repos that aren't in the task list yet
+8. Query IAMQ for registered agents (`GET /agents`) — update awareness of the swarm
 
 ## Daily (First Heartbeat After 09:00)
 
-6. Compress logs older than `$LOG_COMPRESS_AFTER_DAYS` days
-7. Clean up logs older than `$LOG_RETENTION_DAYS` days
-8. Update committer activity data for all watched repos
+9. Compress logs older than `$LOG_COMPRESS_AFTER_DAYS` days
+10. Clean up logs older than `$LOG_RETENTION_DAYS` days
+11. Update committer activity data for all watched repos
 
 ## Weekly (Monday, First Heartbeat After 09:00)
 
-9. Generate weekly commit volume report for all watched repos
-10. Generate author activity and scoring summary
-11. Detect AI-assisted commits and report percentages
-12. Deliver reports to Telegram and `$LIBRARIAN_DATA_FOLDER/input/`
-13. Archive processed scoring data older than 1 year
+12. Generate weekly commit volume report for all watched repos
+13. Generate author activity and scoring summary
+14. Detect AI-assisted commits and report percentages
+15. Deliver reports to Telegram and `$LIBRARIAN_DATA_FOLDER/input/`
+16. Broadcast weekly report summary to IAMQ (all agents)
+17. Archive processed scoring data older than 1 year
 
 ## Heartbeat Response Rules
 
