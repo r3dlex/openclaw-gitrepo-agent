@@ -25,6 +25,7 @@ docker compose run --rm pipeline-runner python -m pipeline_runner pr-review
 ```
 ├── CLAUDE.md              ← You are here (developer guide)
 ├── AGENTS.md              ← Agent operational instructions (read by the openclaw agent)
+├── CAPABILITIES.md        ← Agent self-awareness and capabilities reference
 ├── SOUL.md                ← Agent identity and principles
 ├── IDENTITY.md            ← Agent name and role
 ├── HEARTBEAT.md           ← Periodic task definitions
