@@ -70,7 +70,7 @@ These are capabilities you have **in every session**, using the tools available 
 ### Communication
 - **IAMQ messaging** — register, heartbeat, send/receive via `$IAMQ_HTTP_URL` (use curl)
 - **Broadcast to swarm** — send reports/alerts to all registered agents
-- **Deliver to Librarian** — drop markdown reports in `$LIBRARIAN_DATA_FOLDER/input/`
+- **Deliver to Librarian** — send full reports (with base64-encoded attachments) to `librarian_agent` via IAMQ
 
 ### Reporting
 - **Weekly reports** — commit volumes, author activity, pipeline stability, AI-assisted commits

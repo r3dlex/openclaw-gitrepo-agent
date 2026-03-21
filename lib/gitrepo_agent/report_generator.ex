@@ -1,9 +1,11 @@
 defmodule GitrepoAgent.ReportGenerator do
   @moduledoc """
-  Generates weekly reports and delivers them to the Librarian
-  agent's input folder and broadcasts summaries via IAMQ.
+  Generates weekly reports and delivers them via IAMQ:
+  - Full report sent to `librarian_agent` for archival (with attachments)
+  - Summary broadcast to all agents in the swarm
   """
   use GenServer
+  require Logger
 
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
@@ -88,19 +90,114 @@ defmodule GitrepoAgent.ReportGenerator do
 
   defp deliver_report(report) do
     date = Date.utc_today() |> Date.to_iso8601()
+    filename = "#{date}_weekly_report.md"
 
-    # Save to data dir
+    # Save to local data dir
     data_dir = System.get_env("GITREPO_AGENT_DATA_DIR", "/tmp/gitrepo-agent")
-    report_path = Path.join([data_dir, "data", "reports", "#{date}_weekly_report.md"])
+    report_path = Path.join([data_dir, "data", "reports", filename])
     File.mkdir_p!(Path.dirname(report_path))
     File.write!(report_path, report)
 
-    # Deliver to librarian
-    librarian_dir = System.get_env("LIBRARIAN_DATA_FOLDER", "")
-    unless librarian_dir == "" do
-      librarian_path = Path.join([Path.expand(librarian_dir), "input", "#{date}_weekly_report.md"])
-      File.mkdir_p!(Path.dirname(librarian_path))
-      File.write!(librarian_path, report)
+    # Collect any attachment files (images, charts) from the reports dir
+    attachments = collect_attachments(data_dir, date)
+
+    # Deliver full report to librarian_agent via IAMQ (with attachments)
+    deliver_to_librarian(report, filename, attachments)
+
+    # Broadcast summary to the swarm
+    broadcast_summary(report, date)
+  end
+
+  defp deliver_to_librarian(report, filename, attachments) do
+    # Build a structured body with the report and any attachments
+    body = build_librarian_body(report, filename, attachments)
+
+    case GitrepoAgent.MqClient.send_message(
+      "librarian_agent",
+      "Weekly GitRepo Report — #{Date.utc_today() |> Date.to_iso8601()}",
+      body,
+      type: "request",
+      priority: "NORMAL"
+    ) do
+      {:ok, _} ->
+        Logger.info("[Report] Delivered weekly report to librarian_agent via IAMQ")
+
+      {:error, reason} ->
+        Logger.error("[Report] Failed to deliver to librarian_agent: #{inspect(reason)}")
+    end
+  end
+
+  defp build_librarian_body(report, filename, attachments) do
+    # Structure: JSON with report content and base64-encoded attachments
+    payload = %{
+      "action" => "store_report",
+      "report" => %{
+        "filename" => filename,
+        "content_type" => "text/markdown",
+        "content" => report
+      },
+      "attachments" => Enum.map(attachments, fn {name, data} ->
+        %{
+          "filename" => name,
+          "content_type" => guess_content_type(name),
+          "data" => Base.encode64(data)
+        }
+      end)
+    }
+
+    Jason.encode!(payload)
+  end
+
+  defp broadcast_summary(report, date) do
+    # Extract a concise summary from the full report for the broadcast
+    summary = extract_summary(report)
+
+    case GitrepoAgent.MqClient.broadcast(
+      "Weekly GitRepo Report — #{date}",
+      summary,
+      type: "info",
+      priority: "NORMAL"
+    ) do
+      {:ok, _} ->
+        Logger.info("[Report] Broadcast weekly summary to swarm")
+
+      {:error, reason} ->
+        Logger.warning("[Report] Failed to broadcast summary: #{inspect(reason)}")
+    end
+  end
+
+  defp extract_summary(report) do
+    # Take the first ~500 chars as a summary, or up to the first "---" separator
+    report
+    |> String.split("\n---\n")
+    |> List.first("")
+    |> String.slice(0, 500)
+  end
+
+  defp collect_attachments(data_dir, date) do
+    # Look for images/charts generated alongside the report
+    reports_dir = Path.join([data_dir, "data", "reports"])
+    pattern = Path.join(reports_dir, "#{date}_*")
+
+    Path.wildcard(pattern)
+    |> Enum.reject(&String.ends_with?(&1, ".md"))
+    |> Enum.flat_map(fn path ->
+      case File.read(path) do
+        {:ok, data} -> [{Path.basename(path), data}]
+        {:error, _} -> []
+      end
+    end)
+  end
+
+  defp guess_content_type(filename) do
+    cond do
+      String.ends_with?(filename, ".png") -> "image/png"
+      String.ends_with?(filename, ".jpg") or String.ends_with?(filename, ".jpeg") -> "image/jpeg"
+      String.ends_with?(filename, ".svg") -> "image/svg+xml"
+      String.ends_with?(filename, ".pdf") -> "application/pdf"
+      String.ends_with?(filename, ".json") -> "application/json"
+      String.ends_with?(filename, ".csv") -> "text/csv"
+      true -> "application/octet-stream"
     end
   end
 

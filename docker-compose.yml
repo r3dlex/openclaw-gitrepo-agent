@@ -28,8 +28,8 @@ services:
   # Python pipeline runner — validation pipelines
   pipeline-runner:
     build:
-      context: .
-      dockerfile: tools/pipeline_runner/Dockerfile
+      context: tools/pipeline_runner
+      dockerfile: Dockerfile
     env_file: .env
     volumes:
       - .:/repo:ro

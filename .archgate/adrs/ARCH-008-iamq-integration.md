@@ -5,7 +5,7 @@
 
 ## Context
 
-The GitRepo Agent operates as part of the OpenClaw agent swarm — a network of specialized agents (mail, librarian, journalist, sysadmin, etc.) that need to communicate and coordinate. Previously, the agent delivered reports via Telegram and file drops to the Librarian agent's input folder, but had no way to receive requests from other agents or discover what agents are online.
+The GitRepo Agent operates as part of the OpenClaw agent swarm — a network of specialized agents (mail, librarian, journalist, sysadmin, etc.) that need to communicate and coordinate. Previously, the agent had limited communication channels and no way to receive requests from other agents or discover what agents are online.
 
 The OpenClaw Inter-Agent Message Queue (IAMQ) provides a centralized HTTP + WebSocket message bus running at `http://127.0.0.1:18790` with agent registration, heartbeats, inbox polling, and pub/sub messaging.
 
@@ -27,7 +27,7 @@ The MqClient is the first child in the supervision tree, ensuring it registers b
 **Positive:**
 - GitRepo Agent is now discoverable by all other agents in the swarm
 - Other agents can request PR reviews, repo status, and scoring data
-- Weekly reports reach all agents, not just Telegram and Librarian
+- Weekly reports reach all agents via broadcast, full reports delivered to `librarian_agent` via IAMQ
 - Security alerts broadcast immediately to the entire swarm
 - Graceful degradation: if IAMQ is down, agent retries registration and continues local operations
 

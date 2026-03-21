@@ -9,4 +9,4 @@ RUN poetry install --no-interaction --no-ansi --no-root
 COPY . .
 RUN poetry install --no-interaction --no-ansi
 
-ENTRYPOINT ["python", "-m", "pipeline_runner"]
+CMD ["python", "-m", "pipeline_runner"]

@@ -4,12 +4,30 @@ How the GitRepo Agent communicates results to humans and other agents.
 
 ## Delivery Channels
 
-### Librarian Agent
+### Librarian Agent (via IAMQ)
 
-Full markdown reports are dropped into `$LIBRARIAN_DATA_FOLDER/input/` for long-term storage and retrieval.
+Full reports are sent to `librarian_agent` via the Inter-Agent Message Queue as structured JSON messages with base64-encoded attachments. No file-drop or shared filesystem is required.
 
-- The Librarian agent indexes and catalogs these reports
-- Reports remain available for historical queries and trend analysis
+- The Librarian agent receives reports through its IAMQ inbox
+- Reports include the full markdown content plus any images, charts, or supplementary files as base64-encoded attachments
+- Message body format:
+  ```json
+  {
+    "action": "store_report",
+    "report": {
+      "filename": "2026-03-20_weekly_report.md",
+      "content_type": "text/markdown",
+      "content": "# Weekly GitRepo Report — 2026-03-20\n..."
+    },
+    "attachments": [
+      {
+        "filename": "2026-03-20_commit_chart.png",
+        "content_type": "image/png",
+        "data": "<base64-encoded>"
+      }
+    ]
+  }
+  ```
 - This is the authoritative archive of all agent output
 
 ### Inter-Agent Message Queue (IAMQ)
@@ -51,7 +69,7 @@ All reports follow progressive disclosure: summary first, then details, then raw
 ```
 1. Summary    — one-line verdict, score, and key finding
 2. Details    — category breakdowns, notable findings, recommendations
-3. Raw data   — full pipeline output, file-level findings (in Librarian reports only)
+3. Raw data   — full pipeline output, file-level findings (in reports sent to `librarian_agent` only)
 ```
 
 ## Report Naming
@@ -109,7 +127,7 @@ When broadcasting to the swarm:
 
 - Be concise — keep the body under 500 characters for summaries
 - Lead with the most important information (security alerts first)
-- Reference the full Librarian report rather than including all details
+- Reference the full report (sent to `librarian_agent`) rather than including all details
 - Use a single message per PR (do not split across messages)
 - Use `priority: "URGENT"` only for security-critical findings
 

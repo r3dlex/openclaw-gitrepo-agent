@@ -14,7 +14,7 @@ The core orchestration layer uses OTP supervision trees for reliability:
 - `GitrepoAgent.RepoSync` — pulls latest from all watched repositories, detects new commits and PRs
 - `GitrepoAgent.TaskProcessor` — reads `input/TASK.md`, dispatches work items
 - `GitrepoAgent.Evaluator` — orchestrates PR scoring across all categories
-- `GitrepoAgent.Reporter` — generates markdown reports, dispatches to Telegram and Librarian
+- `GitrepoAgent.Reporter` — generates markdown reports, delivers to `librarian_agent` via IAMQ and broadcasts to the swarm
 - `GitrepoAgent.VCS.Adapter` — behaviour module with implementations per VCS provider
 
 ### Python Pipeline Runner (`tools/`)
@@ -96,16 +96,16 @@ The IAMQ HTTP API runs at `$IAMQ_HTTP_URL` (default: `http://127.0.0.1:18790`).
 
 ## Report Delivery
 
-Reports are delivered through two channels:
+Reports are delivered through two IAMQ channels:
 
-- **Librarian agent** — full markdown reports dropped into `$LIBRARIAN_DATA_FOLDER/input/`
-- **IAMQ broadcast** — summary messages sent to all agents in the swarm
+- **Librarian agent** — full markdown reports sent to `librarian_agent` via IAMQ as structured JSON with base64-encoded attachments (images, charts, supplementary files). No shared filesystem required.
+- **Swarm broadcast** — summary messages sent to all agents in the swarm via IAMQ broadcast.
 
 See [COMMUNICATION.md](COMMUNICATION.md) for report formats and delivery rules.
 
 ## Configuration
 
 - `repos.json` — list of watched repositories with VCS type, URL, branch filters, and sync frequency
-- `.env` — credentials for VCS APIs, Telegram bot token, Librarian paths, IAMQ connection settings
+- `.env` — credentials for VCS APIs, IAMQ connection settings, ARCHITECT evaluator path
 
 See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common configuration issues.

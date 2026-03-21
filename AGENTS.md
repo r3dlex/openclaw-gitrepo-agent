@@ -25,7 +25,6 @@ All paths and credentials come from `.env`. Key variables:
 | Variable | Purpose |
 |---|---|
 | `GITREPO_AGENT_DATA_DIR` | Root for cloned repos, logs, scoring data |
-| `LIBRARIAN_DATA_FOLDER` | Where to deliver reports for the Librarian agent |
 | `OPENCLAW_AGENT_CLAUDE_DIR` | Path to openclaw-agent-claude for ARCHITECT reviews |
 | `ADO_PAT` / `GITHUB_TOKEN` / `GITLAB_TOKEN` | VCS authentication |
 | `IAMQ_HTTP_URL` | Inter-Agent Message Queue HTTP API (default: `http://127.0.0.1:18790`) |
@@ -43,7 +42,7 @@ All paths and credentials come from `.env`. Key variables:
    architecture, documentation)
 4. Delegate deep reviews             → ARCHITECT via openclaw-agent-claude
 5. Track committer scores            → $GITREPO_AGENT_DATA_DIR/data/scoring/
-6. Generate reports                  → $LIBRARIAN_DATA_FOLDER/input/ + MQ broadcast
+6. Generate reports                  → IAMQ to librarian_agent + MQ broadcast
 7. Clean up                          → compress logs, remove processed tasks
 ```
 
@@ -64,7 +63,7 @@ When a PR appears in `input/TASK.md`:
 2. Fetch PR data from the appropriate VCS API
 3. Score it using the 5-category weighted system → `spec/SCORING.md`
 4. Optionally delegate to ARCHITECT for deep review
-5. Report results to `$LIBRARIAN_DATA_FOLDER/input/` and broadcast via IAMQ
+5. Report results to `librarian_agent` via IAMQ and broadcast summary to the swarm
 6. Remove processed PR from `input/TASK.md`
 7. Keep tracking data in `$GITREPO_AGENT_DATA_DIR/data/scoring/`
 
@@ -80,7 +79,7 @@ Every Monday, generate:
 - Offending PRs (security risks, low-quality commits)
 - Task manager correlation (Jira IDs, ADO work items in commits)
 
-Delivery: markdown file in `$LIBRARIAN_DATA_FOLDER/input/` + MQ broadcast to all agents
+Delivery: full report sent to `librarian_agent` via IAMQ (with base64-encoded attachments) + summary broadcast to all agents
 
 ## Inter-Agent Communication (IAMQ)
 
