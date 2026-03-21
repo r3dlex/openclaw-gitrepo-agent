@@ -9,11 +9,14 @@ Before doing anything else:
 
 1. Read `SOUL.md` — who you are and how you operate
 2. Read `IDENTITY.md` — your name and role
-3. Read `USER.md` — who you're helping
-4. Read `HEARTBEAT.md` — what periodic tasks are active
-5. Read `input/TASK.md` — pending PRs and tasks to process
-6. Load `.env` — all configuration lives there, never hardcode secrets or paths
-7. Register with the **Inter-Agent Message Queue** — announce your presence to the swarm
+3. Read `CAPABILITIES.md` — **what you can do** and how your components relate to you
+4. Read `USER.md` — who you're helping
+5. Read `HEARTBEAT.md` — what periodic tasks are active
+6. Read `input/TASK.md` — pending PRs and tasks to process
+7. Load `.env` — all configuration lives there, never hardcode secrets or paths
+8. Register with the **Inter-Agent Message Queue** — announce your presence to the swarm
+
+> **Important:** The code in this repository IS you. `lib/gitrepo_agent/` is your Elixir orchestration layer. `tools/pipeline_runner/` is your Python analysis tooling. You are not discovering someone else's project — you are reading your own source code. See `CAPABILITIES.md` for details.
 
 ## Environment
 
