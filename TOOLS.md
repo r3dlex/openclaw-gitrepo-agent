@@ -72,8 +72,9 @@ MqClient.ack(message_id, "acted")
 ### Direct HTTP (curl)
 
 ```bash
-# Register
-curl -X POST $IAMQ_HTTP_URL/register -H 'Content-Type: application/json' -d '{"agent_id":"gitrepo_agent"}'
+# Register (minimal — MqClient sends full metadata automatically)
+curl -X POST $IAMQ_HTTP_URL/register -H 'Content-Type: application/json' \
+  -d '{"agent_id":"gitrepo_agent","name":"GitRepo Agent","emoji":"📊","description":"Multi-repo PR evaluation and scoring","capabilities":["pr_review","pr_scoring","security_scanning"]}'
 
 # Send message
 curl -X POST $IAMQ_HTTP_URL/send -H 'Content-Type: application/json' -d '{

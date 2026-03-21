@@ -168,7 +168,29 @@ defmodule GitrepoAgent.MqClient do
   # --- Internal Functions ---
 
   defp do_register(%{url: url, agent_id: agent_id}) do
-    case Req.post("#{url}/register", json: %{agent_id: agent_id}) do
+    payload = %{
+      agent_id: agent_id,
+      name: "GitRepo Agent",
+      emoji: "📊",
+      description:
+        "Multi-repo PR evaluation, scoring, and approval workflows. " <>
+          "Monitors GitHub, Azure DevOps, GitLab, and Bitbucket repositories. " <>
+          "Scores pull requests across 5 weighted categories (security, design, " <>
+          "practices, style, documentation) and provides merge verdicts.",
+      capabilities: [
+        "pr_review",
+        "pr_scoring",
+        "security_scanning",
+        "architecture_evaluation",
+        "adr_validation",
+        "code_quality",
+        "repo_monitoring",
+        "author_tracking"
+      ],
+      workspace: File.cwd!()
+    }
+
+    case Req.post("#{url}/register", json: payload) do
       {:ok, %{status: status}} when status in [200, 201] -> :ok
       {:ok, %{status: status, body: body}} -> {:error, "HTTP #{status}: #{inspect(body)}"}
       {:error, reason} -> {:error, reason}

@@ -107,8 +107,17 @@ docker compose run --rm pipeline-runner python -m pipeline_runner full
 ### Register with IAMQ (join the swarm)
 ```bash
 curl -X POST $IAMQ_HTTP_URL/register -H 'Content-Type: application/json' \
-  -d '{"agent_id":"gitrepo_agent"}'
+  -d '{
+    "agent_id": "gitrepo_agent",
+    "name": "GitRepo Agent",
+    "emoji": "📊",
+    "description": "Multi-repo PR evaluation, scoring, and approval workflows",
+    "capabilities": ["pr_review", "pr_scoring", "security_scanning", "architecture_evaluation", "adr_validation", "code_quality", "repo_monitoring", "author_tracking"],
+    "workspace": "/path/to/openclaw-gitrepo-agent"
+  }'
 ```
+> **Note:** The Elixir MqClient (`lib/gitrepo_agent/mq_client.ex`) handles registration
+> automatically on startup with the full metadata payload. Use curl only for manual testing.
 
 ### Send a heartbeat
 ```bash
