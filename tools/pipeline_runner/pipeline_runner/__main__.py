@@ -61,7 +61,8 @@ def run_pipeline(name: str, repo_path: str | None = None) -> dict:
         results.append(result)
 
     print()
-    print(f"{'\u2705 PASSED' if overall_passed else '\u274c FAILED'}")
+    final_icon = "\u2705 PASSED" if overall_passed else "\u274c FAILED"
+    print(final_icon)
 
     return {
         "pipeline": name,
