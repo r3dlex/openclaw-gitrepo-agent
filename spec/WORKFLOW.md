@@ -40,14 +40,19 @@ See `input/TASK.md` for the full format specification.
 
 **Trigger:** Queued PRs ready for evaluation.
 
-1. Run the `pr-review` pipeline (see [PIPELINES.md](PIPELINES.md))
-2. Score across 5 categories with weighted totals (see [SCORING.md](SCORING.md))
-3. If the PR touches architectural boundaries or scores below 70% on Design:
+1. **Check PR status** — verify the PR is still open (not merged or closed). If already merged/closed, skip evaluation and notify the requester.
+2. Run the `pr-review` pipeline (see [PIPELINES.md](PIPELINES.md))
+3. Score across 5 categories with weighted totals (see [SCORING.md](SCORING.md))
+4. If the PR touches architectural boundaries or scores below 70% on Design:
    - Delegate to `openclaw-agent-claude` in ARCHITECT mode
    - Merge ARCHITECT findings into the evaluation
-4. Generate verdict: approve, approve_with_comments, request_changes, or reject
-5. Persist scoring data to `$GITREPO_AGENT_DATA_DIR/data/scoring/`
-6. Update per-author rolling scores
+5. Generate verdict: approve, approve_with_comments, request_changes, or reject
+6. Persist scoring data to `$GITREPO_AGENT_DATA_DIR/data/scoring/`
+7. Update per-author rolling scores
+8. **Notify the requesting agent** — send the evaluation result back via IAMQ:
+   - If the request came from `mail_agent`: instruct it to reply to the original email thread. For approved PRs (score ≥ 90), the email body is simply "Approved". For other verdicts, include score, category breakdown, and key findings.
+   - If the request came from another agent: send a structured response with full evaluation context.
+   - Always include PR reference (VCS, org, project, PR number) for traceability.
 
 ## Phase 4: Reporting
 

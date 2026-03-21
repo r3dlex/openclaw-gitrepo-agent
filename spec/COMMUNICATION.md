@@ -38,7 +38,7 @@ The agent communicates with other OpenClaw agents via the centralized message qu
 
 - **Weekly report broadcast** — summary sent to all agents every Monday via `type: "info"`, `priority: "NORMAL"`
 - **Security alerts** — urgent broadcast when a critical/high severity finding is detected via `type: "error"`, `priority: "URGENT"`
-- **PR score responses** — sent to the requesting agent when they ask for a PR review via `type: "response"`
+- **PR evaluation responses** — sent to the requesting agent after evaluation via `type: "response"`. If the requester is `mail_agent`, the response includes email reply instructions (see below).
 - **Status responses** — sent when another agent queries repo status via `type: "response"`
 
 **Incoming messages handled:**
@@ -118,6 +118,61 @@ All reports follow progressive disclosure: summary first, then details, then raw
   "priority": "URGENT",
   "subject": "Security alert: org/repo-name#789",
   "body": "Critical security finding in PR #789\n\nFinding: Hardcoded API key detected\nFile: src/config/api.py, line 23\nValue: [REDACTED]\n\nVerdict: reject"
+}
+```
+
+### PR Evaluation Response to mail_agent (email notification)
+
+When a PR review request originates from `mail_agent` (i.e., someone emailed a review request), the evaluation response instructs the mail agent to reply to the original email thread:
+
+- **Approved PRs (score ≥ 90):** email body is simply `"Approved"`
+- **Non-approved PRs:** email body includes verdict, score, category breakdown, and key findings
+- **Already merged/closed PRs:** email body states the PR status, no review performed
+
+The response uses `action: "reply_email"` and `reply_to_all: true` so the original sender and all CC'd recipients are notified.
+
+```json
+{
+  "from": "gitrepo_agent",
+  "to": "mail_agent",
+  "type": "request",
+  "priority": "NORMAL",
+  "subject": "PR evaluation result: ado:org/project#456 — Approved",
+  "body": {
+    "action": "reply_email",
+    "context": {
+      "pr": "ado:org/project#456",
+      "score": 92.5,
+      "verdict": "approve",
+      "evaluated_at": "2026-03-21T12:00:00Z"
+    },
+    "email": {
+      "subject": "Approved: ado:org/project#456",
+      "body": "Approved",
+      "reply_to_all": true,
+      "original_sender": "alice@example.com",
+      "original_cc": ["bob@example.com", "carol@example.com"],
+      "original_subject": "Please review PR #456",
+      "original_message_id": "<msg-id@mail.example.com>"
+    }
+  }
+}
+```
+
+**Important:** The notification flow only triggers if the PR is still open (not merged or closed). If the PR has already been merged or closed, the agent responds with a status message instead of performing a full evaluation.
+
+### PR Evaluation Response to other agents
+
+For agents other than `mail_agent`, the response is a plain-text summary:
+
+```json
+{
+  "from": "gitrepo_agent",
+  "to": "main",
+  "type": "response",
+  "priority": "NORMAL",
+  "subject": "PR evaluation result: github:org/repo#123 — Approved",
+  "body": "PR: github:org/repo#123\nAuthor: alice\nScore: 92.5/100\nVerdict: Approved\n\nSecurity: 95 | Design: 90 | Practices: 88 | Style: 95 | Docs: 92"
 }
 ```
 

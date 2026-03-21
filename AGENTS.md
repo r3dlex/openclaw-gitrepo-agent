@@ -118,10 +118,13 @@ This agent is part of the **OpenClaw agent swarm**. It communicates with other a
 
 ### Outgoing Messages
 
-- **Weekly reports** → broadcast to all agents
-- **PR scores** → info to requesting agent
-- **Security alerts** → urgent broadcast when critical PR is detected
+- **Weekly reports** → broadcast to all agents (type: `info`)
+- **PR evaluation results** → response to the requesting agent with score, verdict, and context. If from `mail_agent`, includes email reply instructions with `action: "reply_email"`. Approved PRs get email body "Approved"; others get verdict + findings.
+- **PR status notifications** → if a requested PR is already merged/closed, respond immediately without evaluating
+- **Security alerts** → urgent broadcast when critical PR is detected (type: `error`, priority: `URGENT`)
 - **ARCHITECT delegation** → request to `agent_claude`
+
+**Important:** Evaluation and notification only proceed if the PR is still open. Merged or closed PRs are skipped with a status notification.
 
 For API details → `spec/COMMUNICATION.md`
 

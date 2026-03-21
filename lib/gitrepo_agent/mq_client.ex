@@ -279,7 +279,7 @@ defmodule GitrepoAgent.MqClient do
     cond do
       String.contains?(subject, "pr-review") or String.contains?(subject, "PR review") ->
         Logger.info("[MQ] PR review request from #{from} — queuing for processing")
-        # Could write to input/TASK.md or trigger TaskProcessor directly
+        GitrepoAgent.TaskProcessor.queue_from_mq(message)
 
       String.contains?(subject, "repo-status") or String.contains?(subject, "status") ->
         Logger.info("[MQ] Status request from #{from} — will respond")
